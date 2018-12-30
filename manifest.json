@@ -1,0 +1,10 @@
+{
+  "name": "NFTReseller",
+  "description": "Application to resell AragonNFT through an Aragon App",
+  "icons": [{
+    "src": "/dist/images/icon.png",
+    "sizes": "22x22"
+  }],
+  "start_url": "/dist/index.html",
+  "script": "/dist/script.js"
+}

@@ -1,0 +1,11 @@
+{
+  "roles": [ ],
+  "environments": {
+    "default": {
+      "network": "rpc",
+      "appName": "nftreseller.aragonpm.eth",
+      "wsRPC": "localhost:8545"
+    }
+  },
+  "path": "contracts/NFTReseller.sol"
+}
