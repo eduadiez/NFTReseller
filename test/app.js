@@ -5,7 +5,6 @@ const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
 const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
 const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
-//const Finance = artifacts.require('@aragon/apps-finance/contracts/Finance')
 
 const getContract = name => artifacts.require(name)
 
@@ -16,7 +15,7 @@ const AragonNFT = artifacts.require('@dappnode/aragon-nft/contracts/AragonNFT')
 const NFTReseller = artifacts.require('DAppNodeNFTReseller')
 
 contract('NFTReseller', (accounts) => {
-  let NFTResellerBase, daoFact, dappnodeNFTReseller, AragonNFTBase, AragonNFTProxy, aragonnft, token, acl, vaultBase, vault //, financeBase, finance
+  let NFTResellerBase, daoFact, dappnodeNFTReseller, AragonNFTBase, AragonNFTProxy, aragonnft, token, acl, vaultBase, vault
 
   let APP_MANAGER_ROLE, MINT_ROLE, ANY_ENTITY, RESELLER_MANAGER_ROLE, MANUFACTURER_ROLE, TRANSFER_ROLE
   let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
@@ -41,7 +40,6 @@ contract('NFTReseller', (accounts) => {
     const regFact = await EVMScriptRegistryFactory.new()
     daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     vaultBase = await Vault.new()
-    //financeBase = await Finance.new()
 
 
     AragonNFTBase = await AragonNFT.new({ from: root })
@@ -51,13 +49,6 @@ contract('NFTReseller', (accounts) => {
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     ANY_ENTITY = await aclBase.ANY_ENTITY()
     MINT_ROLE = await AragonNFTBase.MINT_ROLE()
-    /*
-    CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
-    CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
-    CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
-    EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
-    MANAGE_PAYMENTS_ROLE = await financeBase.MANAGE_PAYMENTS_ROLE()
-    */
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
   })
 
@@ -70,26 +61,11 @@ contract('NFTReseller', (accounts) => {
     acl = ACL.at(await dao.acl())
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-
     // vault
     const receiptVault = await dao.newAppInstance('0x1111', vaultBase.address, '0x', false, { from: root })
     vault = Vault.at(receiptVault.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
     await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
     await vault.initialize()
-
-    // finance
-    /*
-    const receiptFinance = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: root })
-    finance = Finance.at(receiptFinance.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-    //await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
-    await finance.initialize(vault.address, PERIOD_DURATION)
-
-    await acl.createPermission(ANY_ENTITY, finance.address, CREATE_PAYMENTS_ROLE, root, { from: root })
-    await acl.createPermission(ANY_ENTITY, finance.address, CHANGE_PERIOD_ROLE, root, { from: root })
-    await acl.createPermission(ANY_ENTITY, finance.address, CHANGE_BUDGETS_ROLE, root, { from: root })
-    await acl.createPermission(ANY_ENTITY, finance.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
-    await acl.createPermission(ANY_ENTITY, finance.address, MANAGE_PAYMENTS_ROLE, root, { from: root })
-    */
 
     const receiptAragonNFT = await dao.newAppInstance('0x2222', AragonNFTBase.address, '0x', true, { from: root })
     aragonnft = AragonNFT.at(receiptAragonNFT.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)

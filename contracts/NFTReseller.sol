@@ -50,7 +50,6 @@ contract NFTReseller is AragonApp {
         require(_to != address(0));
         require(msg.value == tokenPrice);
         vault.send(tokenPrice);
-        //finance.deposit.value(msg.value)(ETH, tokenPrice, "getNFT");
         aragonNFT.mint(_to, _tokenId);
     } 
 
@@ -61,7 +60,6 @@ contract NFTReseller is AragonApp {
         require(ERC20(_tokenERC20).balanceOf(msg.sender) >= price);
         require(ERC20(_tokenERC20).allowance(msg.sender, this) >= price);
         require(ERC20(_tokenERC20).transferFrom(msg.sender, vault, price));
-        //finance.deposit(_tokenERC20, price, "getNFTwithERC20");
         aragonNFT.mint(_to, _tokenId);
     } 
 }
