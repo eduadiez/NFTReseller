@@ -15,7 +15,7 @@ const AragonNFT = artifacts.require('@dappnode/aragon-nft/contracts/AragonNFT')
 const NFTReseller = artifacts.require('DAppNodeNFTReseller')
 
 contract('NFTReseller', (accounts) => {
-  let NFTResellerBase, daoFact, dappnodeNFTReseller, AragonNFTBase, AragonNFTProxy, aragonnft, token, acl, vaultBase, vault
+  let NFTResellerBase, daoFact, dappnodeNFTReseller, AragonNFTBase, AragonNFTProxy, aragonnft, token, acl, vaultBase, vault, dao
 
   let APP_MANAGER_ROLE, MINT_ROLE, ANY_ENTITY, RESELLER_MANAGER_ROLE, MANUFACTURER_ROLE, TRANSFER_ROLE
   let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
@@ -56,13 +56,13 @@ contract('NFTReseller', (accounts) => {
 
   beforeEach(async () => {
     const r = await daoFact.newDAO(root)
-    const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+    dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
 
     acl = ACL.at(await dao.acl())
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     // vault
-    const receiptVault = await dao.newAppInstance('0x1111', vaultBase.address, '0x', false, { from: root })
+    const receiptVault = await dao.newAppInstance('0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1', vaultBase.address, '0x', true, { from: root })
     vault = Vault.at(receiptVault.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
     await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
     await vault.initialize()
@@ -83,20 +83,14 @@ contract('NFTReseller', (accounts) => {
 
   it('should revert if it tries to initialize the AragonNFT with 0x0', async () => {
     return assertRevert(async () => {
-      await dappnodeNFTReseller.initialize(0, vault.address)
-    })
-  })
-
-  it('should revert if it tries to initialize the VaultApp with 0x0', async () => {
-    return assertRevert(async () => {
-      await dappnodeNFTReseller.initialize(aragonnft.address, 0)
+      await dappnodeNFTReseller.initialize(0)
     })
   })
 
   describe('Testing DAppNodeNFTReseller', function() {
 
     beforeEach(async () => {
-      await dappnodeNFTReseller.initialize(aragonnft.address, vault.address)
+      await dappnodeNFTReseller.initialize(aragonnft.address)
     })
 
     it('should be initialized', async () => {
@@ -104,9 +98,10 @@ contract('NFTReseller', (accounts) => {
       assert.equal(await dappnodeNFTReseller.vault(), vault.address)
     })
 
+    
     it('should revert if trying to initialize twice', async () => {
       return assertRevert(async () => {
-        await dappnodeNFTReseller.initialize(aragonnft.address, vault.address)
+        await dappnodeNFTReseller.initialize(aragonnft.address)
       })
     })
 
@@ -298,49 +293,49 @@ contract('NFTReseller', (accounts) => {
       var op_0 = toPaddedHexString(IF_ELSE.toString(16), 2);
       var value_0 = "000000000000000000000000000000000000000000070000000200000001";
       const param_0 = new web3.BigNumber(`0x${argId_0}${op_0}${value_0}`)
-      console.log(`param_0: ${argId_0}${op_0}${value_0}`)
+      //console.log(`param_0: ${argId_0}${op_0}${value_0}`)
 
       var argId_1 = toPaddedHexString(ARG_0.toString(16), 2);
       var op_1 = toPaddedHexString(EQ.toString(16), 2);
       var value_1 = toPaddedHexString(token.address.slice(2), 60);
       const param_1 = new web3.BigNumber(`0x${argId_1}${op_1}${value_1}`)
-      console.log(`param_1: ${argId_1}${op_1}${value_1}`)
+      //console.log(`param_1: ${argId_1}${op_1}${value_1}`)
 
       var argId_2 = toPaddedHexString(LOGIC_OP_PARAM_ID.toString(16), 2);
       var op_2 = toPaddedHexString(IF_ELSE.toString(16), 2);
       var value_2 = "000000000000000000000000000000000000000000070000000400000003";
       const param_2 = new web3.BigNumber(`0x${argId_2}${op_2}${value_2}`)
-      console.log(`param_2: ${argId_2}${op_2}${value_2}`)
+      //console.log(`param_2: ${argId_2}${op_2}${value_2}`)
 
       var argId_3 = toPaddedHexString(ARG_1.toString(16), 2);
       var op_3 = toPaddedHexString(EQ.toString(16), 2);
       var value_3 = toPaddedHexString(price.toString(16), 60);
       const param_3 = new web3.BigNumber(`0x${argId_3}${op_3}${value_3}`)
-      console.log(`param_3: ${argId_3}${op_3}${value_3}`)
+      //console.log(`param_3: ${argId_3}${op_3}${value_3}`)
 
       var argId_4 = toPaddedHexString(LOGIC_OP_PARAM_ID.toString(16), 2);
       var op_4 = toPaddedHexString(IF_ELSE.toString(16), 2);
       var value_4 = "000000000000000000000000000000000000000000070000000600000005";
       const param_4 = new web3.BigNumber(`0x${argId_4}${op_4}${value_4}`)
-      console.log(`param_4: ${argId_4}${op_4}${value_4}`)
+      //console.log(`param_4: ${argId_4}${op_4}${value_4}`)
 
       var argId_5 = toPaddedHexString(ARG_2.toString(16), 2);
       var op_5 = toPaddedHexString(EQ.toString(16), 2);
       var value_5 = toPaddedHexString(manu.slice(2).toString(16), 60);
       const param_5 = new web3.BigNumber(`0x${argId_5}${op_5}${value_5}`)
-      console.log(`param_5: ${argId_5}${op_5}${value_5}`)
+      //console.log(`param_5: ${argId_5}${op_5}${value_5}`)
 
       var argId_6 = toPaddedHexString(PARAM_VALUE_PARAM_ID.toString(16), 2);
       var op_6 = toPaddedHexString(RET.toString(16), 2);
       var value_6 = toPaddedHexString("1", 60);
       const param_6 = new web3.BigNumber(`0x${argId_6}${op_6}${value_6}`)
-      console.log(`param_6: ${argId_6}${op_6}${value_6}`)
+      //console.log(`param_6: ${argId_6}${op_6}${value_6}`)
 
       var argId_7 = toPaddedHexString(PARAM_VALUE_PARAM_ID.toString(16), 2);
       var op_7 = toPaddedHexString(RET.toString(16), 2);
       var value_7 = toPaddedHexString("0", 60);
       const param_7 = new web3.BigNumber(`0x${argId_7}${op_7}${value_7}`)
-      console.log(`param_7: ${argId_7}${op_7}${value_7}`)
+      //console.log(`param_7: ${argId_7}${op_7}${value_7}`)
 
       return [param_0, param_1, param_2, param_3, param_4, param_5, param_6, param_7]; 
 

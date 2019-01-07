@@ -21,23 +21,23 @@ contract NFTReseller is AragonApp {
     Vault public vault;
     uint256 public tokenPrice;
 
-    mapping (address => uint256) public ERC20Payments;
+    mapping (address => uint256) private ERC20Payments;
 
-    function initialize(AragonNFT _aragonNFT, Vault _vault) public onlyInit {
-        require(isContract(_aragonNFT));
-        require(isContract(_vault));
-        vault = _vault;
+    function initialize(AragonNFT _aragonNFT) public onlyInit {
+        vault = Vault(getRecoveryVault());
+        require(isContract(vault));
         aragonNFT = _aragonNFT;
+        require(isContract(_aragonNFT));
         initialized();
     }
 
-    function setNFTPrice(uint256 _price) public auth(RESELLER_MANAGER_ROLE) {
-        tokenPrice = _price;
+    function setNFTPrice(uint256 _newTokenPrice) public auth(RESELLER_MANAGER_ROLE) {
+        tokenPrice = _newTokenPrice;
     }
 
-    function setERC20Price(address _tokenERC20, uint256 _price) public auth(RESELLER_MANAGER_ROLE) {
+    function setERC20Price(address _tokenERC20, uint256 _erc20Price) public auth(RESELLER_MANAGER_ROLE) {
         require(isContract(_tokenERC20));
-        ERC20Payments[_tokenERC20] = _price;
+        ERC20Payments[_tokenERC20] = _erc20Price;
     }
 
     function getERC20Price(address _tokenERC20) public view returns(uint256) {
@@ -45,20 +45,16 @@ contract NFTReseller is AragonApp {
         return ERC20Payments[_tokenERC20];
     }
 
-    function getNFT(address _to, uint256 _tokenId) public payable {
+    function getNFT(address _to, uint256 _tokenId) public payable isInitialized {
         require(tokenPrice != 0);
-        require(_to != address(0));
         require(msg.value == tokenPrice);
         vault.send(tokenPrice);
         aragonNFT.mint(_to, _tokenId);
     } 
 
-    function getNFTwithERC20(address _to, uint256 _tokenId, address _tokenERC20 ) public {
-        require(_to != address(0));
+    function getNFTwithERC20(address _to, uint256 _tokenId, address _tokenERC20 ) public isInitialized {
         uint256 price = ERC20Payments[_tokenERC20];
         require(price != 0);
-        require(ERC20(_tokenERC20).balanceOf(msg.sender) >= price);
-        require(ERC20(_tokenERC20).allowance(msg.sender, this) >= price);
         require(ERC20(_tokenERC20).transferFrom(msg.sender, vault, price));
         aragonNFT.mint(_to, _tokenId);
     } 
@@ -77,8 +73,8 @@ contract DAppNodeNFTReseller is ACLSyntaxSugar, AragonApp, NFTReseller {
     /// ACL
     bytes32 constant public MANUFACTURER_ROLE = keccak256("MANUFACTURER_ROLE");
 
-    function initialize(AragonNFT _aragonNFT, Vault _vault) public onlyInit {
-        super.initialize(_aragonNFT, _vault);
+    function initialize(AragonNFT _aragonNFT) public onlyInit {
+        super.initialize(_aragonNFT);
     }
 
     function getNFT(address _to, uint256 _tokenId) public payable {
@@ -106,25 +102,24 @@ contract DAppNodeNFTReseller is ACLSyntaxSugar, AragonApp, NFTReseller {
         bytes2 _version,
         bytes2 _serial,
         bytes6 _id)
-    public authP(MANUFACTURER_ROLE, arr(_tokenERC20,_price,uint256(_manufacturer))) returns (bytes32)
+    public 
+    authP(MANUFACTURER_ROLE, arr(_tokenERC20, _price, uint256(_manufacturer))) returns (bytes32)
     {
-        require(ERC20(_tokenERC20).balanceOf(msg.sender) >= _price);
-        require(ERC20(_tokenERC20).allowance(msg.sender, this) >= _price);
         require(ERC20(_tokenERC20).transferFrom(msg.sender, vault, _price));
         aragonNFT.mint(msg.sender, uint256(_generateTokenID(_manufacturer, _extra, _model, _version, _serial, _id)));
     }    
 
     function _generateTokenID(
-        bytes8 _manufacturer, 
+        bytes8 _mfr, 
         bytes6 _extra, 
         bytes2 _model,
         bytes2 _version,
         bytes2 _serial,
         bytes6 _id) 
-    internal returns (bytes32)
+    internal 
+    returns (bytes32 result)
     {
-        bytes32 result;
-        bytes memory source = abi.encodePacked(_manufacturer, _extra, _model, _version, _serial, bytes6(block.timestamp), _id);
+        bytes memory source = abi.encodePacked(_mfr, _extra, _model, _version, _serial, bytes6(block.timestamp), _id);
         assembly {
             result := mload(add(source, 32))
         }
@@ -138,7 +133,8 @@ contract DAppNodeNFTReseller is ACLSyntaxSugar, AragonApp, NFTReseller {
             MODEL,
             VERSION,
             SERIAL,
-            bytes6(_randomId(MAX_ID)));
+            bytes6(_randomId(MAX_ID))
+        );
     }
     
     function _randomId (uint256 _limit) internal returns (uint256) {
